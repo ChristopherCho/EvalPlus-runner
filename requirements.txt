@@ -1,0 +1,1 @@
+evalplus[vllm] @ git+https://github.com/evalplus/evalplus@v0.3.1
