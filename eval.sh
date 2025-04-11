@@ -2,7 +2,7 @@ while getopts "m:n:t:o:" opt; do
     case $opt in
         m) MODEL_PATH=$OPTARG ;;
         n) MODEL_NAME=$OPTARG ;;
-        t) TENSOR_PARALLEL_SIZE=$OPTARG ;;
+        t) TASK=$OPTARG ;;
         o) OUTPUT_DIR=$OPTARG ;;
     esac
 done
@@ -22,9 +22,14 @@ if [ -z "$OUTPUT_DIR" ]; then
     echo "Missing output directory. Set to $OUTPUT_DIR"
 fi
 
-if [ -z "$TENSOR_PARALLEL_SIZE" ]; then
-    TENSOR_PARALLEL_SIZE=8
-    echo "Missing tensor parallel size. Set to $TENSOR_PARALLEL_SIZE"
+if [ -z "$TASK" ]; then
+    echo "TASK is not provided. Set to all"
+    TASKS=(
+        humaneval
+        mbpp
+    )
+else
+    TASKS=($TASK)
 fi
 
 OUTPUT_DIR=result/$MODEL_NAME
@@ -44,7 +49,7 @@ evaluate() {
             --model $MODEL_PATH \
             --dataset $task \
             --backend vllm \
-            --tp $TENSOR_PARALLEL_SIZE \
+            --tp 8 \
             --root $LOGGING_DIR \
             --greedy
     ) >$LOGGING_DIR/$task.log
@@ -58,11 +63,7 @@ evaluate() {
 }
 
 
-tasks=(
-    humaneval
-    mbpp
-)
-for task in "${tasks[@]}"; do
+for task in "${TASKS[@]}"; do
     echo "Evaluating $MODEL_NAME on $task"
     evaluate $task
 done
