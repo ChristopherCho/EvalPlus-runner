@@ -16,25 +16,33 @@ def get_task_result(task_path):
 
 def get_model_result(model_path):
     model_name = os.path.basename(model_path)
-    print(f"# {model_name}")
+    tasks = [
+        "humaneval",
+        "mbpp",
+    ]
 
-    result_table = [["Task", "Base (pass@1)", "Plus (pass@1)", "Time taken (s)"]]
-    
-    task_paths = glob(os.path.join(model_path, "*.json"))
-    for task_path in sorted(task_paths):
-        task = os.path.basename(task_path).split(".")[0]
+    model_result = [model_name]
+    for task in sorted(tasks):
+        task_path = os.path.join(model_path, f"{task}.json")
         base_result, plus_result, time_taken = get_task_result(task_path)
-        result_table.append([task, f"{base_result*100:.2f}", f"{plus_result*100:.2f}", time_taken])
-    
-    print(tabulate(result_table, headers="firstrow", tablefmt="github"))
-    print()
+        model_result.extend([f"{base_result*100:.1f}", f"{plus_result*100:.1f}", f"{time_taken}s"])
+
+    return model_result
 
 
 def main(args):
+    table = [
+        ["Score: Pass@1", "HumanEval", "", "", "MBPP", "", ""],
+        ["Model", "Base", "Plus", "Time Taken", "Base", "Plus", "Time Taken"],
+    ]
+    
     models = os.listdir(args.result_dir)
     for model in models:
         model_path = os.path.join(args.result_dir, model)
-        get_model_result(model_path)
+        model_result = get_model_result(model_path)
+        table.append(model_result)
+    
+    print(tabulate(table, headers="firstrow", tablefmt="github"))
 
 
 if __name__ == "__main__":
