@@ -1,8 +1,9 @@
-while getopts "m:n:t:" opt; do
+while getopts "m:n:t:o:" opt; do
     case $opt in
         m) MODEL_PATH=$OPTARG ;;
         n) MODEL_NAME=$OPTARG ;;
         t) TENSOR_PARALLEL_SIZE=$OPTARG ;;
+        o) OUTPUT_DIR=$OPTARG ;;
     esac
 done
 
@@ -16,18 +17,23 @@ if [ -z "$MODEL_NAME" ]; then
     echo "Missing model name. Use $MODEL_NAME"
 fi
 
+if [ -z "$OUTPUT_DIR" ]; then
+    OUTPUT_DIR=result/${MODEL_NAME}
+    echo "Missing output directory. Set to $OUTPUT_DIR"
+fi
+
 if [ -z "$TENSOR_PARALLEL_SIZE" ]; then
     TENSOR_PARALLEL_SIZE=8
     echo "Missing tensor parallel size. Set to $TENSOR_PARALLEL_SIZE"
 fi
 
-output_dir="result/$MODEL_NAME"
-logging_dir="result/$MODEL_NAME/logs"
-mkdir -p $logging_dir
+OUTPUT_DIR=result/$MODEL_NAME
+LOGGING_DIR=${OUTPUT_DIR}/logs
+mkdir -p $LOGGING_DIR
 
 evaluate() {
     task=$1
-    if [ -f "$output_dir/$task.json" ]; then
+    if [ -f "$OUTPUT_DIR/$task.json" ]; then
         echo "Skipping $task because it already exists"
         return
     fi
@@ -39,16 +45,16 @@ evaluate() {
             --dataset $task \
             --backend vllm \
             --tp $TENSOR_PARALLEL_SIZE \
-            --root $logging_dir \
+            --root $LOGGING_DIR \
             --greedy
-    ) >$logging_dir/$task.log
+    ) >$LOGGING_DIR/$task.log
     duration=$SECONDS
-    echo "Time taken: $duration seconds" >> $logging_dir/$task.log
+    echo "Time taken: $duration seconds" >> $LOGGING_DIR/$task.log
 
     python get_result.py \
         --task $task \
-        --logging_dir $logging_dir \
-        --output_dir $output_dir
+        --logging_dir $LOGGING_DIR \
+        --output_dir $OUTPUT_DIR
 }
 
 
