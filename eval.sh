@@ -32,7 +32,6 @@ else
     TASKS=($TASK)
 fi
 
-OUTPUT_DIR=result/$MODEL_NAME
 LOGGING_DIR=${OUTPUT_DIR}/logs
 mkdir -p $LOGGING_DIR
 
